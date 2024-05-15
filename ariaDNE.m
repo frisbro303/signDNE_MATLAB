@@ -55,14 +55,6 @@ for j = 1 : length(fn)
     end
 end
 
-
-% load closed mesh
-% filled_meshname = 'data-noholes.ply';
-% filled_G = Mesh('ply', filled_meshname);
-% filled_G.remove_unref_verts;
-% filled_G.remove_zero_area_faces;
-% filled_G.DeleteIsolatedVertex;
-
 % mesh loading: convert .ply to .mat files
 G = Mesh('ply', meshname);
 
@@ -88,18 +80,13 @@ centroid = sum(points)./numPoints;
 disp("Centroid:");
 disp(centroid);
 
-%area_cut = 0.5;
 faces = G.F';
 
 boundaries = select_mesh_boundaries_and_holes(points,faces);
-
 max_perim_sz = 200;
+
+% Calculated faces of hole-filled mesh
 filled_faces = fill_mesh_holes(points,faces,boundaries,max_perim_sz);
-size(filled_faces);
-% remove faces with area to large.
-%cut_face_indices = find(face_area < area_cut);
-%faces = initial_faces(cut_face_indices, :);
-%size(faces)
 
 normals = zeros(numPoints,3);
 curvature = zeros(numPoints,1);
