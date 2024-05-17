@@ -5,7 +5,7 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % load mesh
-meshname = '5000.ply';
+meshname = 'normal.ply';
 G = Mesh('ply', meshname);G.remove_unref_verts;
 G.remove_zero_area_faces;
 G.DeleteIsolatedVertex;
@@ -20,11 +20,31 @@ fprintf('Positive DNE for data.ply is %f. \n', H.positiveDNE);
 fprintf('Negative DNE for data.ply is %f. \n', H.negativeDNE);
 
 
+G.Centralize('ScaleArea');
+
+load('W_colormap.mat');
+load('H_colormap.mat');
+%%
+% new dne
 figure;
-patch('Faces', G.F', 'Vertices', G.V', 'FaceVertexCData', H.curveSigns, 'FaceColor','interp');
+
+disp(H_colormap);
+
+curve_colormap = [0 0 0;
+                  0 1 0.4];
+colormap(curve_colormap);
+
+hP = patch('vertices',G.V','faces',G.F');
+hP.FaceVertexCData = H.curvature.*H.curveSigns;
+%hP.FaceVertexCData = H.curveSigns;
+hP.EdgeColor = 'none';
+hP.FaceColor = 'flat';
+%hP.SpecularStrength = SpecularStrength;
+
 axis off;
 axis equal;
 cameratoolbar;
-caxis([min(H.localDNE) 0.2*max(H.localDNE)]);
 
-
+lighting phong;
+camlight('headlight');
+camlight(180,0);
