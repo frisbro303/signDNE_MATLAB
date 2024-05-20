@@ -32,6 +32,7 @@ H.Opts.distInfo = 'Geodeisic';
 H.Opts.distance = [];
 H.Opts.bandwidth = bandwidth;
 H.Opts.cutThresh = 0;
+H.Opts.smoothing = 0;
 
 if(nargin < 2)
     bandwidth = [];
@@ -51,13 +52,14 @@ for j = 1 : length(fn)
     if       strcmpi(name,'distance')      H.Opts.distance = value;
     elseif   strcmpi(name,'distInfo')      H.Opts.distInfo = value;
     elseif   strcmpi(name,'cutThresh')     H.Opts.cutThresh = value;
+    %elseif   strcmpi(name,'smoothing')     H.Opts.smoothing = value;
     else     fprintf('ARIADNE.m: invalid options "%s" ignored. \n', name);
     end
 end
 
 % mesh loading: convert .ply to .mat files
-G = Mesh('ply', meshname);
-
+%G = Mesh('ply', meshname);%meshname;%Mesh('ply', meshname);
+G = meshname;
 % mesh cleaning: remove unreferenced vertices, zero-area faces, and
 % isolated vertices.
 G.remove_unref_verts;
@@ -76,6 +78,7 @@ end
 
 points = G.V';
 numPoints = G.nV;
+numFaces = G.nF;
 centroid = sum(points)./numPoints;
 disp("Centroid:");
 disp(centroid);
@@ -83,6 +86,8 @@ disp(centroid);
 faces = G.F';
 
 boundaries = select_mesh_boundaries_and_holes(points,faces);
+
+%Maybe this perimeter size should be dynamically varied? 
 max_perim_sz = 200;
 
 % Calculated faces of hole-filled mesh
@@ -160,16 +165,34 @@ for jj = 1:numPoints
 
 end
 
+% smoothness = (1/numPoints);
+% K = exp(-d_dist.^2/(smoothness^2));
+% % disp("smoothness:")
+% % disp(smoothness);
+
+
+% ------- Uncomment from line 176 to 184 to add smoothness ------- %
+
+smoothed_curvature = curvature;
+for jj = 1:numPoints
+    neighbour = find(K(jj,:) > H.Opts.cutThresh);
+    %numNeighbours = length(neighbour);
+    w = K(jj, neighbour);
+    curvature_avg = sum(curvature(neighbour, 1).*(w'))./sum(w);
+    smoothed_curvature(jj) = curvature_avg;
+end
+curvature = smoothed_curvature;
+
 pointSigns = sign(curvature);
 
 negative_indices = find(pointSigns==-1);
 positive_indices = find(pointSigns==1);
 
-negative_curvature = curvature(negative_indices).*pointSigns(negative_indices);
-positive_curvature = curvature(positive_indices).*pointSigns(positive_indices);
+negative_curvature = curvature(negative_indices);
+positive_curvature = curvature(positive_indices);
 
-% save the outputs
-H.curvature = abs(curvature);
+
+H.signed_localDNE = curvature.*vert_area';
 H.normals = normals;
 H.dne = sum(abs(curvature).*vert_area');
 H.curveSigns = sign(curvature);
