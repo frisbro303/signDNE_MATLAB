@@ -173,15 +173,15 @@ end
 
 % ------- Uncomment from line 176 to 184 to add smoothness ------- %
 
-smoothed_curvature = curvature;
-for jj = 1:numPoints
-    neighbour = find(K(jj,:) > H.Opts.cutThresh);
-    %numNeighbours = length(neighbour);
-    w = K(jj, neighbour);
-    curvature_avg = sum(curvature(neighbour, 1).*(w'))./sum(w);
-    smoothed_curvature(jj) = curvature_avg;
-end
-curvature = smoothed_curvature;
+% smoothed_curvature = curvature;
+% for jj = 1:numPoints
+%     neighbour = find(K(jj,:) > H.Opts.cutThresh);
+%     %numNeighbours = length(neighbour);
+%     w = K(jj, neighbour);
+%     curvature_avg = sum(curvature(neighbour, 1).*(w'))./sum(w);
+%     smoothed_curvature(jj) = curvature_avg;
+% end
+% curvature = smoothed_curvature;
 
 pointSigns = sign(curvature);
 
