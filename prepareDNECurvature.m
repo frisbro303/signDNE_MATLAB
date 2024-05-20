@@ -4,9 +4,9 @@ clear; clc;
 pathSetup();
 
 
-load('W_colormap.mat');
-load('CurvingMapFinal.mat');
-load('H_colormap.mat');
+%load('W_colormap.mat');
+%load('CurvingMapFinal.mat');
+%load('H_colormap.mat');
 load('CustomColormapbluered.mat');
 
 
