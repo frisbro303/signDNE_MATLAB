@@ -81,7 +81,7 @@ end
 boundaries = boundaries(srt_idx,:);
 nb_holes = size(boundaries,1);
 
-fprintf('%d boundaries detected in %d seconds.\n',nb_holes,toc);
+%fprintf('%d boundaries detected in %d seconds.\n',nb_holes,toc);
 
 
 end % detect_mesh_boundaries_and_holes

@@ -5,10 +5,12 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % load mesh
-meshname = '5000.ply';
+meshname = 'data7.ply';
 G = Mesh('ply', meshname);G.remove_unref_verts;
 G.remove_zero_area_faces;
 G.DeleteIsolatedVertex;
+
+load('signedDNE.mat');
 
 % compute ARIADNE
 Options.distInfo = 'Geodeisic';
@@ -21,10 +23,17 @@ fprintf('Negative DNE for data.ply is %f. \n', H.negativeDNE);
 
 
 figure;
-patch('Faces', G.F', 'Vertices', G.V', 'FaceVertexCData', H.curveSigns, 'FaceColor','interp');
+hP = patch('Faces', G.F', 'Vertices', G.V', 'FaceVertexCData', H.localDNE, 'FaceColor','interp');
+hP.EdgeColor = 'none';
+colormap(CustomColormapbluered)
 axis off;
 axis equal;
 cameratoolbar;
-caxis([min(H.localDNE) 0.2*max(H.localDNE)]);
+lighting phong;
+camlight('headlight');
+
+camlight(180,0);
+%caxis([min(H.localDNE) 0.2*max(H.localDNE)]);
+caxis([min(H.localDNE)*0.4 max(H.localDNE)]);
 
 

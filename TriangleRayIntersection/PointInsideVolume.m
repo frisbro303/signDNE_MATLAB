@@ -1,37 +1,43 @@
 function inside = PointInsideVolume(point, faces, vertices)
-%% Point within the volume test
-% TriangleRayIntersection is a low level function which can be used to
-% solve higher level problems. For example a test to see if point is inside
-% or outside of a volume defined by a continous surface:
+    % Check if a point is inside a volume defined by triangular faces
+    %
+    % Parameters:
+    % point    - 1x3 array of the query point
+    % faces    - Mx3 array of vertex indices defining triangular faces
+    % vertices - Kx3 array of vertex coordinates
+    %
+    % Returns:
+    % inside   - Boolean indicating whether the point is inside the volume
 
-%% chack input
-if nargin==2 && isa(faces, 'triangulation')
-  [faces, vertices] = freeBoundary(faces);
-end
+    % Define the single ray direction as in the Python implementation
+    default_direction = [0.4395064455, 0.617598629942, 0.652231566745];
+    
+    % Cast rays in both directions
+    [intersect_f, ~, ~, ~] = TriangleRayIntersection(point, default_direction, ...
+        vertices(faces(:,1),:), vertices(faces(:,2),:), vertices(faces(:,3),:), ...
+        'planeType', 'two sided', 'lineType', 'ray', 'border', 'inclusive');
+    
+    [intersect_b, ~, ~, ~] = TriangleRayIntersection(point, -default_direction, ...
+        vertices(faces(:,1),:), vertices(faces(:,2),:), vertices(faces(:,3),:), ...
+        'planeType', 'two sided', 'lineType', 'ray', 'border', 'inclusive');
 
-switch size(point,2)
-  case 2 % 2D case
-    xv = vertices(faces', 1); % define polygon
-    yv = vertices(faces', 2);
-    inside = inpolygon(point(:,1), point(:,2), xv, yv);
-  case 3
-    eps    = 1e-5;
-    vert1  = vertices(faces(:,1),:);
-    vert2  = vertices(faces(:,2),:);
-    vert3  = vertices(faces(:,3),:);
-    inside = false(size(point,1),1);
-    for iPoint = 1:size(point,1)
-      certain = 0;
-      while ~certain
-        dir = rand(1,3)-0.5; % pick random direction
-        [intersect, ~, u, v] = TriangleRayIntersection(point(iPoint,:), ...
-          dir, vert1, vert2, vert3, 'border', 'inclusive');
-        nIntersect = sum(intersect);    % number of intersections
-        inside(iPoint) = mod(nIntersect,2)>0; % inside if odd number of intersections
-        % make sure ray stays away fron surface triangle edges
-        bary = [u, v, 1-u-v];
-        bary = bary(intersect,:);
-        certain = all( min(abs(bary),[], 2)>eps );
-      end
+    % Count intersections
+    hits_f = sum(intersect_f);
+    hits_b = sum(intersect_b);
+
+    % Check if point is inside (odd number of intersections in both directions)
+    inside = (mod(hits_f, 2) == 1) && (mod(hits_b, 2) == 1);
+
+    % If the result is ambiguous, try a random direction
+    if xor(mod(hits_f, 2) == 1, mod(hits_b, 2) == 1)
+        new_direction = randn(1, 3);
+        new_direction = new_direction / norm(new_direction);
+        
+        [intersect_new, ~, ~, ~] = TriangleRayIntersection(point, new_direction, ...
+            vertices(faces(:,1),:), vertices(faces(:,2),:), vertices(faces(:,3),:), ...
+            'planeType', 'two sided', 'lineType', 'ray', 'border', 'inclusive');
+        
+        hits_new = sum(intersect_new);
+        inside = mod(hits_new, 2) == 1;
     end
 end

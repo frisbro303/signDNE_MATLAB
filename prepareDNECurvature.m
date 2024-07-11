@@ -18,9 +18,11 @@ mesh_names = {'normal', 'low', 'high', 'smooth', '10^{-3} noise', '2 \cdot 10^{-
 positiveDNEs = zeros(nIDs, 1);
 negativeDNEs = zeros(nIDs, 1);
 
+
+
 t = tiledlayout(1, 6, "TileSpacing", "tight");
 noise_level = 0.001 * [1:3];
-for idCnt = 1:nIDs
+for idCnt = 1:2%nIDs
     disp(idCnt)
     if idCnt < 5
         load(sprintf('G%d.mat',idCnt));
@@ -31,33 +33,35 @@ for idCnt = 1:nIDs
     end
     
     % compute ARIADNE
-    Options.distInfo = 'Geodeisic';
+    Options.distInfo = 'Euclidean';
     Options.cutThresh = 0;
     bandwidth = 0.06;
 
     G.Centralize('ScaleArea');
 
     H = ariaDNE(G, bandwidth, Options);
+    disp("DNE:")
+    disp(H.dne)
     positiveDNEs(idCnt) = H.positiveDNE;
     negativeDNEs(idCnt) = H.negativeDNE;
     
     % Patch the tooth
-    nexttile
-    
-    hP = patch('vertices',G.V','faces',G.F');
-    
-    hP.FaceVertexCData = H.signed_localDNE;
-    hP.EdgeColor = 'none';
-    hP.FaceColor = 'interp';
-
-    axis off;
-
-    axis equal;
-    cameratoolbar;
-
-    lighting phong;
-    camlight('headlight');
-    camlight(180,0);
+    % nexttile
+    % 
+    % hP = patch('vertices',G.V','faces',G.F');
+    % 
+    % hP.FaceVertexCData = H.signed_localDNE;
+    % hP.EdgeColor = 'none';
+    % hP.FaceColor = 'interp';
+    % 
+    % axis off;
+    % 
+    % axis equal;
+    % cameratoolbar;
+    % 
+    % lighting phong;
+    % camlight('headlight');
+    % camlight(180,0);
 
     hDNE(1,idCnt) = gca;
 end

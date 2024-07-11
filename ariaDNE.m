@@ -1,4 +1,4 @@
-function [H] = ariaDNE(meshname, bandwidth, Options)
+function [H] = ariaDNE(meshname, bandwidth, Options, indices)
 
 % This function computes the ariaDNE value of a mesh surface.
 % ariaDNE is a robustly implemented algorithm for Dirichlet Normal
@@ -58,8 +58,8 @@ for j = 1 : length(fn)
 end
 
 % mesh loading: convert .ply to .mat files
-%G = Mesh('ply', meshname);%meshname;%Mesh('ply', meshname);
-G = meshname;
+G = Mesh('ply', meshname);%meshname;%Mesh('ply', meshname);
+%G = meshname;
 % mesh cleaning: remove unreferenced vertices, zero-area faces, and
 % isolated vertices.
 G.remove_unref_verts;
@@ -71,6 +71,8 @@ G.DeleteIsolatedVertex;
 Centralize(G,'ScaleArea');
 [~, face_area] = ComputeSurfaceArea(G);
 vert_area = (face_area'*G.F2V)/3;
+disp("varea");
+disp(sum(vert_area));
 [vnorm, ~] = ComputeNormal(G);
 if size(vnorm,1) < size(vnorm,2)
     vnorm = vnorm';
@@ -80,22 +82,20 @@ points = G.V';
 numPoints = G.nV;
 numFaces = G.nF;
 centroid = sum(points)./numPoints;
-disp("Centroid:");
-disp(centroid);
 
 faces = G.F';
 
-boundaries = select_mesh_boundaries_and_holes(points,faces);
-
-%Maybe this perimeter size should be dynamically varied? 
-max_perim_sz = 200;
+boundaries = detect_mesh_boundaries_and_holes(faces);
+disp(size(boundaries));
 
 % Calculated faces of hole-filled mesh
-filled_faces = fill_mesh_holes(points,faces,boundaries,max_perim_sz);
+filled_faces = fill_mesh_holes(points,faces,boundaries);
 
 normals = zeros(numPoints,3);
 curvature = zeros(numPoints,1);
 curvature_nn = zeros(numPoints,1);
+
+centroids = zeros(numPoints, 3);
 
 % compute or load pairwise distnace
 if isempty(H.Opts.distance) 
@@ -116,6 +116,7 @@ K = exp(-d_dist.^2/(bandwidth^2));
 
 % for each vertex in the mesh, estimate its curvature via PCA
 for jj = 1:numPoints
+    %disp(jj);
     neighbour = find(K(jj,:) > H.Opts.cutThresh);
     numNeighbours = length(neighbour);
     if numNeighbours <= 3
@@ -155,14 +156,16 @@ for jj = 1:numPoints
 
     % determine the sign of the curvature
     neighbour_centroid = sum(points(neighbour, 1:3).*(w'))./sum(w);
+    centroids(jj, :) = neighbour_centroid;
+    %disp(neighbour_centroid);
     inside = PointInsideVolume(neighbour_centroid, filled_faces, points);
     inside = inside*2 - 1;
+    %disp(inside);
     
     % use the eigenvalue of that eigenvector to estimate the curvature
     lambda = d(k);
     curvature(jj) = (lambda/sum(d))*inside;
     curvature_nn(jj) = (nnz(w>max(w)*1e-4))*inside;
-
 end
 
 % smoothness = (1/numPoints);
@@ -184,20 +187,34 @@ end
 % curvature = smoothed_curvature;
 
 pointSigns = sign(curvature);
+localDNE = curvature.*vert_area';
 
-negative_indices = find(pointSigns==-1);
-positive_indices = find(pointSigns==1);
+positive_indices = localDNE>0;
+negative_indices = localDNE<0;
 
-negative_curvature = curvature(negative_indices);
-positive_curvature = curvature(positive_indices);
+%negative_curvature = curvature(negative_indices);
+%positive_curvature = curvature(positive_indices);
 
 
-H.signed_localDNE = curvature.*vert_area';
-H.normals = normals;
-H.dne = sum(abs(curvature).*vert_area');
-H.curveSigns = sign(curvature);
-H.positiveDNE = sum(positive_curvature.*vert_area(positive_indices)');
-H.negativeDNE = sum(negative_curvature.*vert_area(negative_indices)');
-H.localDNE = abs(curvature).*vert_area';
+%H.signed_localDNE = curvature.*vert_area';
+%H.normals = normals;
+% writematrix(centroids, 'centroids.csv');
+H.dne = sum(abs(localDNE));
+%H.curveSigns = sign(curvature);
+H.positiveDNE = sum(localDNE(positive_indices));
+H.negativeDNE = sum(localDNE(negative_indices));
+H.localDNE = localDNE;
+
+%PointInsideVolume(G.V, G.F, G.V)
+%disp(find(curvature<0));
+%h = sign(curvature);
+% disp(centroids(367, :));
+
+%disp(h);
+% disp(pointSigns(367));
+% inside = PointInsideVolume(centroids(1, :), filled_faces, points);
+% inside = inside*2 - 1;
+% disp("sign:")
+% disp(inside);
 end
 

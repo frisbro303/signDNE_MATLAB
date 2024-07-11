@@ -126,7 +126,7 @@ for h = holes_begin_idx:nb_holes % loop on every holes
         
 end
 
-fprintf('%d hole(s) filled by adding %d triangles in %d seconds.\n',nb_holes,nb_added_tgl,toc);
+%fprintf('%d hole(s) filled by adding %d triangles in %d seconds.\n',nb_holes,nb_added_tgl,toc);
 
 
 end % fill_mesh_holes
