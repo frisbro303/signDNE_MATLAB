@@ -1,4 +1,4 @@
-function [H] = ariaDNE(meshname, bandwidth, Options, indices)
+function [H] = ariaDNE(meshname, watertight_meshname, bandwidth, Options)
 
 % This function computes the ariaDNE value of a mesh surface.
 % ariaDNE is a robustly implemented algorithm for Dirichlet Normal
@@ -57,39 +57,60 @@ for j = 1 : length(fn)
     end
 end
 
+%mod = py.importlib.import_module('trimesh');
+%mod = py.importlib.import_module('numpy');
+%pyversion('/usr/bin/python3');
+ 
 % mesh loading: convert .ply to .mat files
-G = Mesh('ply', meshname);%meshname;%Mesh('ply', meshname);
+G = Mesh('ply', meshname);
+G_watertight = Mesh('ply', watertight_meshname);
+
+Centralize(G, G_watertight,'ScaleArea');
+
+watertight_points = G_watertight.V';
+watertight_faces = G_watertight.F';
+
+py.importlib.import_module('numpy');
+
+py.importlib.import_module('trimesh');
+
+numpy_vertices = py.numpy.array(watertight_points);
+
+numpy_faces = py.numpy.array(watertight_faces - 1); % Convert to 0-based indexing for Python
+
+% Create a Trimesh mesh instance
+mesh_watertight = py.trimesh.Trimesh(numpy_vertices, numpy_faces);
+%meshname;%Mesh('ply', meshname);
+%disp(size(G.V'))
 %G = meshname;
 % mesh cleaning: remove unreferenced vertices, zero-area faces, and
 % isolated vertices.
-G.remove_unref_verts;
-G.remove_zero_area_faces;
-G.DeleteIsolatedVertex;
+%G.remove_unref_verts;
+%G.remove_zero_area_faces;
+%G.DeleteIsolatedVertex;
+
 
 % mesh preparation: centeralize, normalize the mesh to have surface area 1,
 % compute an initial estimate of normals 
-Centralize(G,'ScaleArea');
+
 [~, face_area] = ComputeSurfaceArea(G);
+%disp("new area");
+%disp(sum(face_area));
 vert_area = (face_area'*G.F2V)/3;
-disp("varea");
-disp(sum(vert_area));
 [vnorm, ~] = ComputeNormal(G);
 if size(vnorm,1) < size(vnorm,2)
     vnorm = vnorm';
 end
 
 points = G.V';
+faces = G.F';
+
+
 numPoints = G.nV;
 numFaces = G.nF;
 centroid = sum(points)./numPoints;
 
-faces = G.F';
 
-boundaries = detect_mesh_boundaries_and_holes(faces);
-disp(size(boundaries));
-
-% Calculated faces of hole-filled mesh
-filled_faces = fill_mesh_holes(points,faces,boundaries);
 
 normals = zeros(numPoints,3);
 curvature = zeros(numPoints,1);
@@ -111,8 +132,10 @@ else
     d_dist = H.Opts.distance;
 end
 
+%disp(d_dist(1:5, 1:5));
 % define the weight matrix
 K = exp(-d_dist.^2/(bandwidth^2));
+%disp(K(1:5, 1:5));
 
 % for each vertex in the mesh, estimate its curvature via PCA
 for jj = 1:numPoints
@@ -125,7 +148,6 @@ for jj = 1:numPoints
     p = repmat(points(jj,1:3),numNeighbours,1) - points(neighbour,1:3);
     w = K(jj, neighbour);
 
-    
     % build covariance matrix for PCA
     C = zeros(1,6);
     C(1) = sum(p(:,1).*(w').*p(:,1),1);
@@ -138,11 +160,14 @@ for jj = 1:numPoints
     
     Cmat = [C(1) C(2) C(3);...
         C(2) C(4) C(5);...
-        C(3) C(5) C(6)];  
+        C(3) C(5) C(6)];
+
+    %disp(Cmat);
     
     % compute its eigenvalues and eigenvectors
     [v,d] = eig(Cmat);
     d = diag(d);
+    %disp(sort(d));
     
     % find the eigenvector that is closest to the vertex normal 
     v_aug = [v -v];
@@ -158,9 +183,18 @@ for jj = 1:numPoints
     neighbour_centroid = sum(points(neighbour, 1:3).*(w'))./sum(w);
     centroids(jj, :) = neighbour_centroid;
     %disp(neighbour_centroid);
-    inside = PointInsideVolume(neighbour_centroid, filled_faces, points);
+
+    
+    %numpy_centroid = py.numpy.array([neighbour_centroid], pyargs('dtype', 'float64'));
+    numpy_centroid = py.numpy.array(neighbour_centroid, pyargs('dtype', 'float64'));
+    
+    % Check if the point is inside the mesh
+    inside = mesh_watertight.ray.contains_points(py.list({numpy_centroid}));
+    
+    inside = double(py.array.array('d', py.numpy.nditer(inside)));
+    % Convert the result to MATLAB data type
+    
     inside = inside*2 - 1;
-    %disp(inside);
     
     % use the eigenvalue of that eigenvector to estimate the curvature
     lambda = d(k);
@@ -185,9 +219,13 @@ end
 %     smoothed_curvature(jj) = curvature_avg;
 % end
 % curvature = smoothed_curvature;
-
-pointSigns = sign(curvature);
+% 
+% pointSigns = sign(curvature);
 localDNE = curvature.*vert_area';
+% 
+% %localDNE(boundaries{1}) = [];
+% 
+% 
 
 positive_indices = localDNE>0;
 negative_indices = localDNE<0;
