@@ -4,72 +4,61 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % compute ariaDNE
+values = zeros(6:3);
 Options.distInfo = 'Euclidean';
 Options.cutThresh = 0;
+bandwidth = 0.08;
+
+% Normal
 meshname = 'normal.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-%fprintf('ariaDNE for normal.ply is %f. \n', H.dne);
-disp("normal:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+watertight_meshname = 'normal_watertight.ply';
+H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
 
-%writematrix(H.localDNE, "localDNE.csv");
-%dlmwrite('localDNE.csv', H.localDNE, 'precision', '%.15f');
+positives(1) = H.positiveDNE;
+negatives(1) = H.negativeDNE;
+
+% Low
 meshname = 'low.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("low:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+watertight_meshname = 'low_watertight.ply';
+H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
 
+% High
+positives(2) = H.positiveDNE;
+negatives(2) = H.negativeDNE;
 
 meshname = 'high.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("high:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+watertight_meshname = 'high_watertight.ply';
+H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
 
-meshname = 'smooth.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("smooth:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
-%fprintf('ariaDNE for smooth.ply is %f. \n', H.dne);
+positives(3) = H.positiveDNE;
+negatives(3) = H.negativeDNE;
 
+% 10^{-3} Noise
 meshname = 'noise1.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("noise1:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+watertight_meshname = 'noise1_watertight.ply';
+H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
 
+positives(4) = H.positiveDNE;
+negatives(4) = H.negativeDNE;
+
+% 2*10^{-3} Noise
 meshname = 'noise2.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("noise2:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+watertight_meshname = 'noise2_watertight.ply';
+H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
 
+positives(5) = H.positiveDNE;
+negatives(5) = H.negativeDNE;
 
+% Smooth
+meshname = 'smooth.ply';
+watertight_meshname = 'smooth_watertight.ply';
+H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
 
+positives(6) = H.positiveDNE;
+negatives(6) = H.negativeDNE;
+
+disp("positives:")
+disp(positives);
+disp("negatives:")
+disp(negatives);
+%writematrix(values', "positives.csv");
