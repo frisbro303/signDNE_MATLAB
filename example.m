@@ -4,10 +4,13 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % compute ariaDNE
-values = zeros(6:3);
-Options.distInfo = 'Euclidean';
+%values = zeros(6:3);
+Options.distInfo = 'Geodeisic';
 Options.cutThresh = 0;
 bandwidth = 0.08;
+
+positives = zeros(1, 6);
+negatives = zeros(1, 6);
 
 % Normal
 meshname = 'normal.ply';
