@@ -33,6 +33,4 @@ disp(positives);
 disp("negatives:");
 disp(negatives);
 
-
-
 %writematrix(values', "positives.csv");
