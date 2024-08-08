@@ -4,72 +4,35 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % compute ariaDNE
+%values = zeros(6:3);
 Options.distInfo = 'Euclidean';
 Options.cutThresh = 0;
-meshname = 'normal.ply';
 bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-%fprintf('ariaDNE for normal.ply is %f. \n', H.dne);
-disp("normal:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
 
-%writematrix(H.localDNE, "localDNE.csv");
-%dlmwrite('localDNE.csv', H.localDNE, 'precision', '%.15f');
-meshname = 'low.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("low:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+mesh_names = ["normal", "low", "high", "noise1", "noise2", "smooth"]
 
+for i = 3:length(mesh_names)
+    meshname = mesh_names(i) + ".ply";
+    watertight_meshname = mesh_names(i) + "_watertight.ply";
+    H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
+    DNEs(i) = H.dne;
+    positives(i) = H.positiveDNE;
+    negatives(i) = H.negativeDNE;
+end
 
-meshname = 'high.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("high:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+DNEs = round(DNEs, 4);
+positives = round(positives, 4);
+negatives = round(negatives, 4);
 
-meshname = 'smooth.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("smooth:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
-%fprintf('ariaDNE for smooth.ply is %f. \n', H.dne);
+disp("DNEs:");
+disp(DNEs);
 
-meshname = 'noise1.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("noise1:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+disp("positives:");
+disp(positives);
 
-meshname = 'noise2.ply';
-bandwidth = 0.08;
-H = ariaDNE(meshname, bandwidth, Options);
-disp("noise2:")
-disp(H.dne)
-disp("positive:");
-disp(H.positiveDNE);
-disp("negative:");
-disp(H.negativeDNE);
+disp("negatives:");
+disp(negatives);
 
 
 
+%writematrix(values', "positives.csv");

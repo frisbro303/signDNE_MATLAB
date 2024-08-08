@@ -36,7 +36,7 @@ function inside = PointInsideVolume(point, faces, vertices)
         [intersect_new, ~, ~, ~] = TriangleRayIntersection(point, new_direction, ...
             vertices(faces(:,1),:), vertices(faces(:,2),:), vertices(faces(:,3),:), ...
             'planeType', 'two sided', 'lineType', 'ray', 'border', 'inclusive');
-        
+        disp("")
         hits_new = sum(intersect_new);
         inside = mod(hits_new, 2) == 1;
     end
