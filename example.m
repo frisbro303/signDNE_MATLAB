@@ -11,7 +11,7 @@ bandwidth = 0.08;
 
 mesh_names = ["normal", "low", "high", "noise1", "noise2", "smooth"]
 
-for i = 3:length(mesh_names)
+for i = 1:length(mesh_names)
     meshname = mesh_names(i) + ".ply";
     watertight_meshname = mesh_names(i) + "_watertight.ply";
     H = ariaDNE(meshname, watertight_meshname, bandwidth, Options);
