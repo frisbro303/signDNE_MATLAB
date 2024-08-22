@@ -1,4 +1,4 @@
-function [H] = ariaDNE(meshname, watertight_meshname, bandwidth, Options)
+function [H] = ariaDNE(meshname, bandwidth, Options)
 
 % This function computes the ariaDNE value of a mesh surface.
 % ariaDNE is a robustly implemented algorithm for Dirichlet Normal
@@ -26,6 +26,8 @@ function [H] = ariaDNE(meshname, watertight_meshname, bandwidth, Options)
 %       shan-qm@imada.sdu.dk
 %       June 14, 2018
 %
+
+% load watertight version if it exists
 
 % default options
 H.Opts.distInfo = 'Geodeisic';
@@ -62,10 +64,21 @@ end
 %pyversion('/usr/bin/python3');
  
 % mesh loading: convert .ply to .mat files
-G = Mesh('ply', meshname);
-G_watertight = Mesh('ply', watertight_meshname);
 
-Centralize(G, G_watertight,'ScaleArea');
+parts = split(meshname, '.');
+
+G = Mesh('ply', meshname);
+watertight_meshname = parts{1} + "_watertight." + parts{2};
+disp(watertight_meshname);
+filePath = which(watertight_meshname);
+if ~isempty(filePath)
+    disp(filePath);
+    G_watertight = Mesh('ply', filePath);
+else
+    G_watertight = G;
+end
+
+Centralize(G, G_watertight, 'ScaleArea');
 
 watertight_points = G_watertight.V';
 watertight_faces = G_watertight.F';
@@ -80,22 +93,13 @@ numpy_faces = py.numpy.array(watertight_faces - 1); % Convert to 0-based indexin
 
 % Create a Trimesh mesh instance
 mesh_watertight = py.trimesh.Trimesh(numpy_vertices, numpy_faces);
-%meshname;%Mesh('ply', meshname);
-%disp(size(G.V'))
-%G = meshname;
-% mesh cleaning: remove unreferenced vertices, zero-area faces, and
-% isolated vertices.
-%G.remove_unref_verts;
-%G.remove_zero_area_faces;
-%G.DeleteIsolatedVertex;
+
 
 
 % mesh preparation: centeralize, normalize the mesh to have surface area 1,
 % compute an initial estimate of normals 
 
 [~, face_area] = ComputeSurfaceArea(G);
-%disp("new area");
-%disp(sum(face_area));
 vert_area = (face_area'*G.F2V)/3;
 [vnorm, ~] = ComputeNormal(G);
 if size(vnorm,1) < size(vnorm,2)
@@ -103,20 +107,12 @@ if size(vnorm,1) < size(vnorm,2)
 end
 
 points = G.V';
-faces = G.F';
-
 
 numPoints = G.nV;
-numFaces = G.nF;
-centroid = sum(points)./numPoints;
-
-
 
 normals = zeros(numPoints,3);
 curvature = zeros(numPoints,1);
 curvature_nn = zeros(numPoints,1);
-
-centroids = zeros(numPoints, 3);
 
 % compute or load pairwise distnace
 if isempty(H.Opts.distance) 
@@ -132,14 +128,11 @@ else
     d_dist = H.Opts.distance;
 end
 
-%disp(d_dist(1:5, 1:5));
 % define the weight matrix
 K = exp(-d_dist.^2/(bandwidth^2));
-%disp(K(1:5, 1:5));
 
 % for each vertex in the mesh, estimate its curvature via PCA
 for jj = 1:numPoints
-    %disp(jj);
     neighbour = find(K(jj,:) > H.Opts.cutThresh);
     numNeighbours = length(neighbour);
     if numNeighbours <= 3
@@ -162,12 +155,10 @@ for jj = 1:numPoints
         C(2) C(4) C(5);...
         C(3) C(5) C(6)];
 
-    %disp(Cmat);
     
     % compute its eigenvalues and eigenvectors
     [v,d] = eig(Cmat);
     d = diag(d);
-    %disp(sort(d));
     
     % find the eigenvector that is closest to the vertex normal 
     v_aug = [v -v];
@@ -181,11 +172,7 @@ for jj = 1:numPoints
 
     % determine the sign of the curvature
     neighbour_centroid = sum(points(neighbour, 1:3).*(w'))./sum(w);
-    centroids(jj, :) = neighbour_centroid;
-    %disp(neighbour_centroid);
 
-    
-    %numpy_centroid = py.numpy.array([neighbour_centroid], pyargs('dtype', 'float64'));
     numpy_centroid = py.numpy.array(neighbour_centroid, pyargs('dtype', 'float64'));
     
     % Check if the point is inside the mesh
@@ -202,57 +189,15 @@ for jj = 1:numPoints
     curvature_nn(jj) = (nnz(w>max(w)*1e-4))*inside;
 end
 
-% smoothness = (1/numPoints);
-% K = exp(-d_dist.^2/(smoothness^2));
-% % disp("smoothness:")
-% % disp(smoothness);
-
-
-% ------- Uncomment from line 176 to 184 to add smoothness ------- %
-
-% smoothed_curvature = curvature;
-% for jj = 1:numPoints
-%     neighbour = find(K(jj,:) > H.Opts.cutThresh);
-%     %numNeighbours = length(neighbour);
-%     w = K(jj, neighbour);
-%     curvature_avg = sum(curvature(neighbour, 1).*(w'))./sum(w);
-%     smoothed_curvature(jj) = curvature_avg;
-% end
-% curvature = smoothed_curvature;
-% 
-% pointSigns = sign(curvature);
 localDNE = curvature.*vert_area';
-% 
-% %localDNE(boundaries{1}) = [];
-% 
-% 
 
 positive_indices = localDNE>0;
 negative_indices = localDNE<0;
 
-%negative_curvature = curvature(negative_indices);
-%positive_curvature = curvature(positive_indices);
 
-
-%H.signed_localDNE = curvature.*vert_area';
-%H.normals = normals;
-% writematrix(centroids, 'centroids.csv');
 H.dne = sum(abs(localDNE));
-%H.curveSigns = sign(curvature);
 H.positiveDNE = sum(localDNE(positive_indices));
 H.negativeDNE = sum(localDNE(negative_indices));
 H.localDNE = localDNE;
-
-%PointInsideVolume(G.V, G.F, G.V)
-%disp(find(curvature<0));
-%h = sign(curvature);
-% disp(centroids(367, :));
-
-%disp(h);
-% disp(pointSigns(367));
-% inside = PointInsideVolume(centroids(1, :), filled_faces, points);
-% inside = inside*2 - 1;
-% disp("sign:")
-% disp(inside);
 end
 
