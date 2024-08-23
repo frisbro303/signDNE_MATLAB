@@ -1,9 +1,12 @@
 function result = computeDNEfolder(foldername, bandwidth, Options)
     [fileNameList, suffix] = getFileNames(foldername);
-    result = zeros(1, length(fileNameList));
-    for i = 1:length(fileNameList)
-        meshname = [foldername '/' fileNameList{i} suffix];
-        H = ARIADNE(meshname, bandwidth, Options);
-        result(i) = H.dne;
+
+    filteredFileNameList = fileNameList(~endsWith(fileNameList, '_watertight'));
+
+    result = zeros(length(filteredFileNameList), 3);
+    for i = 1:length(filteredFileNameList)
+        meshname = [foldername '/' filteredFileNameList{i} suffix];
+        H = ariaDNE(meshname, bandwidth, Options);
+        result(i, :) = [H.DNE, H.positiveDNE, H.negativeDNE];
     end
 end

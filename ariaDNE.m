@@ -59,20 +59,14 @@ for j = 1 : length(fn)
     end
 end
 
-%mod = py.importlib.import_module('trimesh');
-%mod = py.importlib.import_module('numpy');
-%pyversion('/usr/bin/python3');
- 
-% mesh loading: convert .ply to .mat files
 
 parts = split(meshname, '.');
 
 G = Mesh('ply', meshname);
 watertight_meshname = parts{1} + "_watertight." + parts{2};
-disp(watertight_meshname);
+
 filePath = which(watertight_meshname);
 if ~isempty(filePath)
-    disp(filePath);
     G_watertight = Mesh('ply', filePath);
 else
     G_watertight = G;
@@ -116,7 +110,7 @@ curvature_nn = zeros(numPoints,1);
 
 % compute or load pairwise distnace
 if isempty(H.Opts.distance) 
-    if strcmpi(H.Opts.distInfo, 'Geodeisic') 
+    if strcmpi(H.Opts.distInfo, 'Geodesic') 
         d_dist = distances(graph(Triangulation2AdjacencyWeighted(G))); % compatible with the latest Matlab version
         %d_dist = graphallshortestpaths(Triangulation2AdjacencyWeighted(G)); % works for Matlab 2020a and before
     elseif strcmpi(H.Opts.distInfo, 'Euclidean')
@@ -195,9 +189,10 @@ positive_indices = localDNE>0;
 negative_indices = localDNE<0;
 
 
-H.dne = sum(abs(localDNE));
+H.DNE = sum(abs(localDNE));
 H.positiveDNE = sum(localDNE(positive_indices));
 H.negativeDNE = sum(localDNE(negative_indices));
 H.localDNE = localDNE;
+H.curvature = curvature;
 end
 

@@ -6,11 +6,12 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % compute ARIADNE
-Options.distInfo = 'Geodeisic';
+Options.distInfo = 'Euclidean';
 Options.cutThresh = 0;
 foldername = [pwd '/data'];
-bandwidth = 0.06;
+bandwidth = 0.08;
 result = computeDNEfolder(foldername, bandwidth, Options);
+disp(result);
 save('result.m', 'result')
 fprintf('Computation is complete. Results are saved in result.m');
 
