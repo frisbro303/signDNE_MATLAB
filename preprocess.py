@@ -2,6 +2,8 @@ import os
 import sys
 import argparse
 from pathlib import Path
+import trimesh
+import pyvista as pv
 
 
 def parse_arguments():
@@ -40,7 +42,6 @@ def preprocess_file(file_name):
     mesh = trimesh.load(file_name)
     
     # Simple clean up
-    mesh.remove_duplicate_vertices()
     mesh.fill_holes()
     mesh.update_faces(mesh.nondegenerate_faces(height=1e-08))
     mesh.update_faces(mesh.unique_faces())
@@ -50,7 +51,7 @@ def preprocess_file(file_name):
 
     mesh = close_holes(mesh)
     base_name, extension = os.path.splitext(file_name)
-    mesh.export(f"{base_name}_watertight{extension})
+    mesh.export(f"{base_name}_watertight{extension}")
 
     # ms = pymeshlab.MeshSet()
     # ms.load_new_mesh(file_name)
