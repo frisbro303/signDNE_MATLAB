@@ -9,6 +9,7 @@ Options.distInfo = 'Euclidean';
 Options.cutThresh = 0;
 bandwidth = 0.08;
 
-H = ariaDNE("data2/low.ply", bandwidth, Options);
+H = ariaDNE("data/normal.ply", bandwidth, Options);
+disp(H.DNE);
 disp(H.positiveDNE);
 disp(H.negativeDNE);
