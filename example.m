@@ -5,11 +5,11 @@ pathSetup();
 
 % compute ariaDNE
 %values = zeros(6:3);
-Options.distInfo = 'Euclidean';
+Options.distInfo = 'Geodesic';
 Options.cutThresh = 0;
 bandwidth = 0.08;
 
-H = ariaDNE("data/normal.ply", bandwidth, Options);
+H = ariaDNE("data/smooth.ply", bandwidth, Options);
 disp(H.DNE);
 disp(H.positiveDNE);
 disp(H.negativeDNE);

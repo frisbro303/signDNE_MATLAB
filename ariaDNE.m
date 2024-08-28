@@ -4,30 +4,6 @@ function [H] = ariaDNE(meshname, bandwidth, Options)
 % ariaDNE is a robustly implemented algorithm for Dirichlet Normal
 % Energy, which measures how much a surface deviates from a plane.
 
-% Input:
-%       meshname     - the mesh .ply file
-%       bandwidth    - the episilon value in the paper, which indicates
-%                      the size of local influence in the weight function
-%       Options      - distInfo:  'Geodeisic' (default) or 'Euclidean'
-%                    - distance:  precomputed distance matrix
-%                    - cutThresh: cut-off threshold for very small values
-%                                 default is set to be 0, i.e. no values
-%                                 will be ignored.
-
-% Output:
-%       H.normals    - approximated normals for each vertex
-%       H.curvature  - approxiamted curvature for each vertex
-%       H.localDNE   - local energy values for each vertex
-%       H.dne        - ARIADNE value for the surface
-
-% Author:
-%       Shan Shan
-%       Department of Mathematics
-%       shan-qm@imada.sdu.dk
-%       June 14, 2018
-%
-
-% load watertight version if it exists
 
 % default options
 H.Opts.distInfo = 'Geodeisic';
@@ -76,6 +52,7 @@ Centralize(G, G_watertight, 'ScaleArea');
 
 watertight_points = G_watertight.V';
 watertight_faces = G_watertight.F';
+
 
 py.importlib.import_module('numpy');
 

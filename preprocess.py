@@ -52,26 +52,7 @@ def preprocess_file(file_name):
     mesh = close_holes(mesh)
     base_name, extension = os.path.splitext(file_name)
     mesh.export(f"{base_name}_watertight{extension}")
-
-    # ms = pymeshlab.MeshSet()
-    # ms.load_new_mesh(file_name)
-    # ms.meshing_remove_duplicate_vertices()
-    # ms.meshing_remove_duplicate_faces()
-    # ms.meshing_remove_folded_faces()
-    # ms.meshing_remove_null_faces()
-    # ms.meshing_remove_unreferenced_vertices()
-    # ms.save_current_mesh(file_name)
-    # ms.meshing_close_holes(
-    #         maxholesize=10000000,
-    #         selected=False,
-    #         newfaceselected=True, 
-    #         selfintersection=False,
-    #         refinehole=True,
-    #     )
-    # base_name, extension = os.path.splitext(file_name)
-    # new_file_name = f"{base_name}_watertight{extension}"
-    # ms.save_current_mesh(new_file_name)
-
+    
 
 def main():
     args = parse_arguments()
