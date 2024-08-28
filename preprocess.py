@@ -1,4 +1,3 @@
-import pymeshlab
 import os
 import sys
 import argparse
@@ -24,25 +23,53 @@ def get_file_names(input_paths):
     return [f for f in file_names if f.is_file()]#[f for f in file_names if f.suffix in ('.ply', '.obj')]
 
 
+def close_holes(tm_mesh):
+    pv_mesh = pv.wrap(tm_mesh)
+
+    filled_mesh = pv_mesh.fill_holes(hole_size=float('inf'))
+
+    vertices = filled_mesh.points
+    faces = filled_mesh.faces.reshape((-1, 4))[:, 1:]
+    tm_closed_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+    tm_closed_mesh.fix_normals()
+
+    return tm_closed_mesh
+
+
 def preprocess_file(file_name):
-    ms = pymeshlab.MeshSet()
-    ms.load_new_mesh(file_name)
-    ms.meshing_remove_duplicate_vertices()
-    ms.meshing_remove_duplicate_faces()
-    ms.meshing_remove_folded_faces()
-    ms.meshing_remove_null_faces()
-    ms.meshing_remove_unreferenced_vertices()
-    ms.save_current_mesh(file_name)
-    ms.meshing_close_holes(
-            maxholesize=10000000,
-            selected=False,
-            newfaceselected=True, 
-            selfintersection=False,
-            refinehole=True,
-        )
+    mesh = trimesh.load(file_name)
+    
+    # Simple clean up
+    mesh.remove_duplicate_vertices()
+    mesh.fill_holes()
+    mesh.update_faces(mesh.nondegenerate_faces(height=1e-08))
+    mesh.update_faces(mesh.unique_faces())
+    mesh.remove_infinite_values()
+    mesh.remove_unreferenced_vertices()
+    mesh.export(file_name)
+
+    mesh = close_holes(mesh)
     base_name, extension = os.path.splitext(file_name)
-    new_file_name = f"{base_name}_watertight{extension}"
-    ms.save_current_mesh(new_file_name)
+    mesh.export(f"{base_name}_watertight{extension})
+
+    # ms = pymeshlab.MeshSet()
+    # ms.load_new_mesh(file_name)
+    # ms.meshing_remove_duplicate_vertices()
+    # ms.meshing_remove_duplicate_faces()
+    # ms.meshing_remove_folded_faces()
+    # ms.meshing_remove_null_faces()
+    # ms.meshing_remove_unreferenced_vertices()
+    # ms.save_current_mesh(file_name)
+    # ms.meshing_close_holes(
+    #         maxholesize=10000000,
+    #         selected=False,
+    #         newfaceselected=True, 
+    #         selfintersection=False,
+    #         refinehole=True,
+    #     )
+    # base_name, extension = os.path.splitext(file_name)
+    # new_file_name = f"{base_name}_watertight{extension}"
+    # ms.save_current_mesh(new_file_name)
 
 
 def main():
