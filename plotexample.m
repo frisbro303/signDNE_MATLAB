@@ -5,7 +5,7 @@ pathSetup();
 % pathSetup(BaseDirectory) %or provide a specified base directory
 
 % load mesh
-meshname = 'data.ply';
+meshname = 'normal.ply';
 G = Mesh('ply', meshname);
 G.remove_unref_verts;
 G.remove_zero_area_faces;
