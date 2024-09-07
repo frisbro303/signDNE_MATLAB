@@ -4,6 +4,7 @@ function [H] = ariaDNE(meshname, bandwidth, Options)
 % ariaDNE is a robustly implemented algorithm for Dirichlet Normal
 % Energy, which measures how much a surface deviates from a plane.
 
+pyenv(Version="/opt/homebrew/Caskroom/miniconda/base/envs/my_env/bin/python")
 
 % default options
 H.Opts.distInfo = 'Geodeisic';
@@ -47,6 +48,9 @@ if ~isempty(filePath)
 else
     G_watertight = G;
 end
+
+[~, unnormalized_face_area] = ComputeSurfaceArea(G);
+unnormalized_vert_area = (unnormalized_face_area'*G.F2V)/3;
 
 Centralize(G, G_watertight, 'ScaleArea');
 
@@ -171,5 +175,8 @@ H.positiveDNE = sum(localDNE(positive_indices));
 H.negativeDNE = sum(localDNE(negative_indices));
 H.localDNE = localDNE;
 H.curvature = curvature;
+H.surface_area = sum(unnormalized_vert_area);
+H.positive_surface_area = sum(unnormalized_vert_area(positive_indices));
+H.negative_surface_area = sum(unnormalized_vert_area(negative_indices));
 end
 

@@ -53,7 +53,6 @@ lighting phong;
 camlight('headlight');
 
 camlight(180,0);
-caxis([min(H.curvature) max(H.curvature)]);
-%caxis([min(H.localDNE)*0.4 max(H.localDNE)]);
+clim([min(H.curvature) max(H.curvature)]);
 
 
