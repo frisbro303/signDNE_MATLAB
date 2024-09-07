@@ -4,7 +4,7 @@ function [H] = ariaDNE(meshname, bandwidth, Options)
 % ariaDNE is a robustly implemented algorithm for Dirichlet Normal
 % Energy, which measures how much a surface deviates from a plane.
 
-pyenv(Version="/opt/homebrew/Caskroom/miniconda/base/envs/my_env/bin/python")
+
 
 % default options
 H.Opts.distInfo = 'Geodeisic';
